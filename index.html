@@ -73,24 +73,6 @@
           </div>
 
           <div class="kpi">
-            <div class="kpiLabel">Pagos a tiempo</div>
-            <div class="kpiValue" id="kpiPagos">$0</div>
-            <div class="kpiSub" id="kpiPagoHasta">—</div>
-          </div>
-
-          <div class="kpi">
-            <div class="kpiLabel">Saldo financiado</div>
-            <div class="kpiValue" id="kpiFinanciado">$0</div>
-            <div class="kpiSub">Estado - pagos a tiempo</div>
-          </div>
-
-          <div class="kpi">
-            <div class="kpiLabel">Interés del próximo período</div>
-            <div class="kpiValue" id="kpiInteres">$0</div>
-            <div class="kpiSub" id="kpiInteresInfo">—</div>
-          </div>
-
-          <div class="kpi">
             <div class="kpiLabel">Pago mínimo sugerido</div>
             <div class="kpiValue" id="kpiMinimo">$0</div>
             <div class="kpiSub">Calculado automáticamente</div>
@@ -108,22 +90,6 @@
 
         <div class="divider"></div>
 
-        <h3 class="h3">Simulación: pagar mínimo vs pagar total</h3>
-        <div class="simGrid">
-          <div class="simBox">
-            <div class="simTitle">Pago total</div>
-            <div class="simLine">Interés próximo: <strong id="simTotalInteres">$0</strong></div>
-            <div class="simLine">Saldo a financiar: <strong id="simTotalFin">$0</strong></div>
-          </div>
-          <div class="simBox">
-            <div class="simTitle">Pago mínimo</div>
-            <div class="simLine">Interés próximo: <strong id="simMinInteres">$0</strong></div>
-            <div class="simLine">Saldo a financiar: <strong id="simMinFin">$0</strong></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
         <h2>Gráficos</h2>
         <canvas id="chartDeudaEntidad" height="220"></canvas>
         <p class="hint">Distribución de gastos por entidad.</p>
@@ -145,7 +111,7 @@
 
           <label>Tipo
             <select id="tipoGasto">
-              <option value="revolving">Tarjeta (revolving)</option>
+              <option value="una_cuota">Una cuota (pago completo)</option>
               <option value="cuotas_sin_interes">Cuotas sin interés</option>
               <option value="cuotas_con_interes">Cuotas con interés</option>
             </select>
