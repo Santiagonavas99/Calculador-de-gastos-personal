@@ -22,7 +22,10 @@ export function initGastosUI() {
 
     if (!monto || !fecha || cuotas < 1) return;
 
-    const fixedTipo = (cuotas <= 1) ? 'revolving' : tipo;
+    let fixedTipo = tipo;
+    if (cuotas === 1) {
+      fixedTipo = 'una_cuota';
+    }
 
     addGasto({
       id: uuid(),
@@ -30,7 +33,7 @@ export function initGastosUI() {
       tipo: fixedTipo,
       monto,
       fecha,
-      cuotas: Math.max(1, cuotas),
+      cuotas: 1,
       tasaMensual: fixedTipo === 'cuotas_con_interes' ? tasaMensual : 0,
       cuotasPagadas: null
     });

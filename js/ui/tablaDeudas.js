@@ -13,13 +13,14 @@ export function renderTablaDeudas() {
   cards.innerHTML = '';
 
   state.gastos.forEach((g, idx) => {
-    const tipo = g.tipo || 'revolving';
+    const tipo = g.tipo || 'una_cuota';
     const n = Number(g.cuotas || 1);
 
     let cuotaMes = '-';
     let saldo = money(g.monto);
 
-    if (tipo !== 'revolving' && n > 1) {
+    // Solo mostrar cuota y saldo para compras a cuotas (no para una_cuota)
+    if ((tipo === 'cuotas_sin_interes' || tipo === 'cuotas_con_interes') && n > 1) {
       cuotaMes = money(cuotaDelMesCuotas(g));
       saldo = money(deudaRestanteCuotas(g));
     }
@@ -30,7 +31,7 @@ export function renderTablaDeudas() {
       <td><input type="text" class="edit-entidad" data-idx="${idx}" value="${(g.entidad||'').replace(/"/g,'&quot;')}" /></td>
       <td>
         <select class="edit-tipo" data-idx="${idx}">
-          <option value="revolving" ${tipo==='revolving'?'selected':''}>Revolving</option>
+          <option value="una_cuota" ${tipo==='una_cuota'?'selected':''}>Una cuota</option>
           <option value="cuotas_sin_interes" ${tipo==='cuotas_sin_interes'?'selected':''}>Cuotas sin interés</option>
           <option value="cuotas_con_interes" ${tipo==='cuotas_con_interes'?'selected':''}>Cuotas con interés</option>
         </select>
@@ -40,7 +41,7 @@ export function renderTablaDeudas() {
       <td><input type="number" class="edit-tasa" data-idx="${idx}" min="0" step="0.01" value="${Number(g.tasaMensual||0)}" ${tipo==='cuotas_con_interes'?'':'disabled'} /></td>
       <td>${cuotaMes}</td>
       <td>${saldo}</td>
-      <td><input type="number" class="edit-pagadas" data-idx="${idx}" min="0" step="1" value="${g.cuotasPagadas ?? ''}" placeholder="auto" ${tipo==='revolving'?'disabled':''} /></td>
+      <td><input type="number" class="edit-pagadas" data-idx="${idx}" min="0" step="1" value="${g.cuotasPagadas ?? ''}" placeholder="auto" ${tipo==='una_cuota'?'disabled':''} /></td>
       <td><button class="btn-mini btn-del" data-idx="${idx}">🗑️</button></td>
     `;
     tbody.appendChild(tr);
@@ -69,7 +70,7 @@ export function renderTablaDeudas() {
         </label>
         <label>Tipo
           <select class="edit-tipo" data-idx="${idx}">
-            <option value="revolving" ${tipo==='revolving'?'selected':''}>Revolving</option>
+            <option value="una_cuota" ${tipo==='una_cuota'?'selected':''}>Una cuota</option>
             <option value="cuotas_sin_interes" ${tipo==='cuotas_sin_interes'?'selected':''}>Cuotas sin interés</option>
             <option value="cuotas_con_interes" ${tipo==='cuotas_con_interes'?'selected':''}>Cuotas con interés</option>
           </select>
@@ -81,7 +82,7 @@ export function renderTablaDeudas() {
           <input type="number" class="edit-tasa" data-idx="${idx}" min="0" step="0.01" value="${Number(g.tasaMensual||0)}" ${tipo==='cuotas_con_interes'?'':'disabled'} />
         </label>
         <label>Cuotas pagadas
-          <input type="number" class="edit-pagadas" data-idx="${idx}" min="0" step="1" value="${g.cuotasPagadas ?? ''}" placeholder="auto" ${tipo==='revolving'?'disabled':''} />
+          <input type="number" class="edit-pagadas" data-idx="${idx}" min="0" step="1" value="${g.cuotasPagadas ?? ''}" placeholder="auto" ${tipo==='una_cuota'?'disabled':''} />
         </label>
       </div>
     `;
@@ -103,7 +104,10 @@ export function renderTablaDeudas() {
       const newTipo = e.target.value;
       const current = state.gastos[idx];
       const cuotas = Number(current.cuotas || 1);
-      const tipo = cuotas <= 1 ? 'revolving' : newTipo;
+      let tipo = newTipo;
+      if (cuotas === 1 && newTipo !== 'una_cuota') {
+        tipo = 'una_cuota';
+      }
       updateGasto(idx, { tipo, tasaMensual: tipo === 'cuotas_con_interes' ? Number(current.tasaMensual||0) : 0 });
       renderAll();
     });
@@ -114,7 +118,12 @@ export function renderTablaDeudas() {
       const idx = Number(e.target.dataset.idx);
       const cuotas = Math.max(1, Number(e.target.value) || 1);
       const current = state.gastos[idx];
-      const tipo = cuotas <= 1 ? 'revolving' : (current.tipo || 'cuotas_sin_interes');
+      let tipo = current.tipo || 'una_cuota';
+      if (cuotas === 1) {
+        tipo = 'una_cuota';
+      } else if (cuotas > 1 && tipo === 'una_cuota') {
+        tipo = 'cuotas_sin_interes';
+      }
       updateGasto(idx, { cuotas, tipo });
       renderAll();
     });

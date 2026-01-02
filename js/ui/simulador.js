@@ -21,11 +21,14 @@ export function initSimuladorUI() {
       return;
     }
 
-    const fixedTipo = (cuotas <= 1) ? 'revolving' : tipo;
+    let fixedTipo = tipo;
+    if (cuotas === 1) {
+      fixedTipo = 'una_cuota';
+    }
 
     // info TC real: a qué corte caería
     let corteInfo = '';
-    if (fixedTipo === 'revolving') {
+    if (fixedTipo === 'una_cuota') {
       const cut = cutDateForPurchase(state.config, fecha);
       corteInfo = cut ? `• Esta compra caería en el corte: ${cut.toISOString().slice(0,10)}` : '• No pude determinar el corte.';
     }
@@ -33,7 +36,7 @@ export function initSimuladorUI() {
     // cuotas calc
     let cuotaMes = '-';
     let interesesTot = '-';
-    if (fixedTipo !== 'revolving' && cuotas > 1) {
+    if (fixedTipo !== 'una_cuota' && cuotas > 1) {
       if (fixedTipo === 'cuotas_sin_interes') {
         cuotaMes = money(monto / cuotas);
         interesesTot = money(0);
@@ -47,7 +50,7 @@ export function initSimuladorUI() {
 
     const engine = computeAmortizationRows(state, new Date(), 18);
     const balanceHoy = engine.ledger[engine.ledger.length - 1]?.balance ?? 0;
-    const balanceSim = Number(balanceHoy || 0) + (fixedTipo === 'revolving' ? monto : 0);
+    const balanceSim = Number(balanceHoy || 0) + (fixedTipo === 'una_cuota' ? monto : 0);
 
     let msg =
       `📊 Simulación\n` +

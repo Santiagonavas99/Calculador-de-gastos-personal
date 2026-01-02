@@ -17,7 +17,11 @@ function clasificarRiesgo(deudaTotal, cupoTotal, umbrales = { verde: 0.6, amaril
 function deudaCuotasTotal() {
   const hoy = new Date();
   return (state.gastos || [])
-    .filter(g => (g.tipo || 'revolving') !== 'revolving')
+    .filter(g => {
+      const tipo = g.tipo || 'una_cuota';
+      // Incluir cuotas sin interés, con interés, pero no una_cuota (que entra en TC) ni revolving (financiado)
+      return tipo === 'cuotas_sin_interes' || tipo === 'cuotas_con_interes';
+    })
     .reduce((s,g)=>s + deudaRestanteCuotas(g, hoy), 0);
 }
 

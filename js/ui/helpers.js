@@ -10,7 +10,8 @@ export function fmtDateISO(date) {
 }
 
 export const TYPE_LABEL = {
-  revolving: 'Revolving',
+  una_cuota: 'Una cuota',
   cuotas_sin_interes: 'Cuotas sin interés',
-  cuotas_con_interes: 'Cuotas con interés'
+  cuotas_con_interes: 'Cuotas con interés',
+  revolving: 'Revolving (financiado)'
 };

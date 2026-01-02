@@ -48,8 +48,9 @@ export function buildCycles(config, fromDate, toDate) {
 export function normalizeTransactions(state) {
   const tx = [];
   for (const g of (state.gastos || [])) {
-    const tipo = g.tipo || 'revolving';
-    if (tipo === 'revolving') {
+    const tipo = g.tipo || 'una_cuota';
+    // Solo las compras a una cuota entran en el saldo de TC
+    if (tipo === 'una_cuota') {
       tx.push({
         date: startOfDay(new Date(g.fecha)),
         amount: Number(g.monto || 0),
@@ -210,35 +211,32 @@ export function pagoMinimoReal(state, cycleRow) {
 
   let total = 0;
 
-    // 1. Cuotas del mes (solo la cuota correspondiente al mes actual)
-    for (const gasto of (state.gastos || [])) {
-      if (
-        (gasto.tipo === 'cuotas_sin_interes' || gasto.tipo === 'cuotas_con_interes') &&
-        Number(gasto.cuotas || 1) > 1
-      ) {
-        const fechaCompra = new Date(gasto.fecha);
-        // La cuota entra si la compra fue hecha antes o durante el periodo de corte
-        if (fechaCompra <= corteFin) {
-          const n = Number(gasto.cuotas || 1);
-          const pv = Number(gasto.monto || 0);
-          if (gasto.tipo === 'cuotas_sin_interes') {
-            total += pv / n;
-          } else {
-            const r = (Number(gasto.tasaMensual || 0) / 100);
-            total += pmt(r, n, pv);
-          }
+  // 1. Cuotas del mes (solo la cuota correspondiente al mes actual)
+  for (const gasto of (state.gastos || [])) {
+    if (
+      (gasto.tipo === 'cuotas_sin_interes' || gasto.tipo === 'cuotas_con_interes') &&
+      Number(gasto.cuotas || 1) > 1
+    ) {
+      const fechaCompra = new Date(gasto.fecha);
+      // La cuota entra si la compra fue hecha antes o durante el periodo de corte
+      if (fechaCompra <= corteFin) {
+        const n = Number(gasto.cuotas || 1);
+        const pv = Number(gasto.monto || 0);
+        if (gasto.tipo === 'cuotas_sin_interes') {
+          total += pv / n;
+        } else {
+          const r = (Number(gasto.tasaMensual || 0) / 100);
+          total += pmt(r, n, pv);
         }
       }
     }
+  }
 
-  // 2️⃣ Compras a 1 cuota en el corte
-  for (const g of state.gastos) {
-    if (
-      g.tipo === 'revolving' &&
-      Number(g.cuotas || 1) === 1
-    ) {
+  // 2. Compras a una cuota dentro del corte
+  for (const g of (state.gastos || [])) {
+    if (g.tipo === 'una_cuota') {
       const fecha = new Date(g.fecha);
-      if (fecha >= corteInicio && fecha <= corteFin) {
+      if (fecha > corteInicio && fecha <= corteFin) {
         total += Number(g.monto || 0);
       }
     }
