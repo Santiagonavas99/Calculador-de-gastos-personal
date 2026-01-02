@@ -6,13 +6,6 @@ export function dailyRateFromEA(tasaEA_pct) {
   return Math.pow(1 + ea, 1/365) - 1;
 }
 
-export function pagoMinimoMonto(saldoEstado, pagoMinPct, pagoMinFijo) {
-  const s = Math.max(0, Number(saldoEstado || 0));
-  const pct = Math.max(0, Number(pagoMinPct || 0)) / 100;
-  const fijo = Math.max(0, Number(pagoMinFijo || 0));
-  return Math.max(s * pct, fijo);
-}
-
 export function buildCycles(config, fromDate, toDate) {
   const diaCorte = Number(config.diaCorte || 25);
   const diaPago = Number(config.diaPago || 5);
@@ -48,7 +41,8 @@ export function buildCycles(config, fromDate, toDate) {
     cycles.push({ cutDate, dueDate, periodStart, periodEnd, key: iso(cutDate) });
   }
 
-  return cycles.filter(c => c.periodEnd >= from && c.periodStart <= to);
+  const filtered = cycles.filter(c => c.periodEnd >= from && c.periodStart <= to);
+  return filtered;
 }
 
 export function normalizeTransactions(state) {
@@ -155,6 +149,10 @@ export function computeAmortizationRows(state, today = new Date(), monthsBack = 
 
 export function latestCycleForToday(rows, today = new Date()) {
   const t = startOfDay(today);
+  // Buscar el ciclo cuyo período incluya "hoy"
+  const current = rows.find(r => betweenInclusive(t, r.periodStart, r.periodEnd));
+  if (current) return current;
+  // Si no hay ciclo actual (caso raro), devolver el más cercano anterior
   const past = rows.filter(r => r.cutDate <= t);
   if (!past.length) return rows[0] || null;
   past.sort((a,b)=>b.cutDate-a.cutDate);
@@ -195,4 +193,56 @@ export function cutDateForPurchase(config, purchaseDate) {
   const cycles = buildCycles(config, new Date(d.getFullYear(), d.getMonth()-2, 1), new Date(d.getFullYear(), d.getMonth()+2, 28));
   const c = cycles.find(x => betweenInclusive(d, x.periodStart, x.periodEnd));
   return c ? c.cutDate : null;
+}
+
+import { deudaRestanteCuotas, cuotaDelMesCuotas, pmt } from './finance.js';
+
+/**
+ * Pago mínimo real:
+ * - suma cuotas del mes (cuotas con o sin interés)
+ * - + compras revolving hechas a 1 cuota en el corte
+ */
+export function pagoMinimoReal(state, cycleRow) {
+  if (!cycleRow) return 0;
+
+  const corteInicio = cycleRow.periodStart;
+  const corteFin = cycleRow.periodEnd;
+
+  let total = 0;
+
+    // 1. Cuotas del mes (solo la cuota correspondiente al mes actual)
+    for (const gasto of (state.gastos || [])) {
+      if (
+        (gasto.tipo === 'cuotas_sin_interes' || gasto.tipo === 'cuotas_con_interes') &&
+        Number(gasto.cuotas || 1) > 1
+      ) {
+        const fechaCompra = new Date(gasto.fecha);
+        // La cuota entra si la compra fue hecha antes o durante el periodo de corte
+        if (fechaCompra <= corteFin) {
+          const n = Number(gasto.cuotas || 1);
+          const pv = Number(gasto.monto || 0);
+          if (gasto.tipo === 'cuotas_sin_interes') {
+            total += pv / n;
+          } else {
+            const r = (Number(gasto.tasaMensual || 0) / 100);
+            total += pmt(r, n, pv);
+          }
+        }
+      }
+    }
+
+  // 2️⃣ Compras a 1 cuota en el corte
+  for (const g of state.gastos) {
+    if (
+      g.tipo === 'revolving' &&
+      Number(g.cuotas || 1) === 1
+    ) {
+      const fecha = new Date(g.fecha);
+      if (fecha >= corteInicio && fecha <= corteFin) {
+        total += Number(g.monto || 0);
+      }
+    }
+  }
+
+  return Math.max(0, total);
 }

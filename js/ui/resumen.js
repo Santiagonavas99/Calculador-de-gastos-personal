@@ -1,7 +1,7 @@
 import { state } from '../state/store.js';
 import { money, percent } from '../core/format.js';
 import { deudaRestanteCuotas } from '../core/finance.js';
-import { computeAmortizationRows, latestCycleForToday, pagoMinimoMonto, simulateNextPeriodInterest } from '../core/tcEngine.js';
+import { computeAmortizationRows, latestCycleForToday, simulateNextPeriodInterest, pagoMinimoReal } from '../core/tcEngine.js';
 import { byId, setKpiColor } from './helpers.js';
 
 function clasificarRiesgo(deudaTotal, cupoTotal, umbrales = { verde: 0.6, amarillo: 0.85 }) {
@@ -32,7 +32,7 @@ export function renderResumen() {
   const pagosATiempo = last ? Number(last.pagosATiempo || 0) : 0;
   const financed = Math.max(0, saldoCorte - pagosATiempo);
 
-  const pagoMinimo = pagoMinimoMonto(saldoCorte, state.config.pagoMinPct, state.config.pagoMinFijo);
+  const pagoMinimo = pagoMinimoReal(state, last);
 
   // Simulación: si hoy aún no es vencimiento, asumir pagos a tiempo actuales = pagos registrados (ya incluidos en pagosATiempo),
   // y simular pago extra en el vencimiento.

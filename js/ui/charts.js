@@ -1,7 +1,7 @@
 import { state } from '../state/store.js';
 import { money } from '../core/format.js';
 import { cuotaDelMesCuotas } from '../core/finance.js';
-import { computeAmortizationRows, latestCycleForToday, simulateNextPeriodInterest, pagoMinimoMonto } from '../core/tcEngine.js';
+import { computeAmortizationRows, latestCycleForToday, simulateNextPeriodInterest, pagoMinimoReal } from '../core/tcEngine.js';
 
 let deudaChart = null;
 let timelineChart = null;
@@ -91,7 +91,9 @@ function renderTimeline() {
   if (last) {
     const saldoCorte = Number(last.saldoCorte || 0);
     const pagos = Number(last.pagosATiempo || 0);
-    const minPay = pagoMinimoMonto(saldoCorte, state.config.pagoMinPct, state.config.pagoMinFijo);
+    const cicloActual = latestCycleForToday(engine.rows, new Date());
+    const minPay = pagoMinimoReal(state, cicloActual);
+
     const extraToMin = Math.max(0, minPay - pagos);
     const simMin = simulateNextPeriodInterest(engine, last, extraToMin);
 

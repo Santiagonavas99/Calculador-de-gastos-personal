@@ -6,8 +6,6 @@ const defaultState = {
     tasaEA: 40,      // % efectiva anual
     diaCorte: 25,
     diaPago: 5,
-    pagoMinPct: 5,
-    pagoMinFijo: 50000,
     riesgo: { verde: 0.60, amarillo: 0.85 }
   },
   gastos: [],
